@@ -1,0 +1,33 @@
+name: Read helloworld from Repo B
+
+on:
+  push:
+    branches:
+      - '**'
+  workflow_dispatch:
+
+jobs:
+  read-repo-b:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate GitHub App token
+        id: generate-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${app_id}
+          private-key: $${{ secrets.${org_secret_name} }}
+          repositories: ${repo_b_name}
+          owner: ${gh_org_name}
+
+      - name: Check out Repo B
+        uses: actions/checkout@v4
+        with:
+          repository: ${gh_org_name}/${repo_b_name}
+          token: $${{ steps.generate-token.outputs.token }}
+
+      - name: Read helloworld.txt
+        shell: pwsh
+        run: |
+          $content = Get-Content -Path helloworld.txt -Raw
+          Write-Host "Contents of helloworld.txt:"
+          Write-Host $content
