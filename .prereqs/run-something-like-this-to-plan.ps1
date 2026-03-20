@@ -8,6 +8,14 @@ $gh_cli_logged_in_user = (gh auth status --active --json 'hosts' --jq '.hosts."g
 If ($gh_cli_logged_in_user -ne $first_listed_non_current_repo_owner_gh_user) {
     gh auth switch --user $first_listed_non_current_repo_owner_gh_user
 }
+$current_scopes_list = (gh auth status --active --json 'hosts' --jq '.hosts."github.com"[0].scopes').Split(', ')
+$definitely_needed_scopes_list = @('delete_repo', 'admin:org')
+$still_needed_scopes_list = $definitely_needed_scopes_list | Where-Object { $_ -notin $current_scopes_list }
+If ($still_needed_scopes_list.Count -gt 0) {
+    $scopes_to_request = $still_needed_scopes_list -join ','
+    Write-Host("Still need these scopes:  $scopes_to_request")
+    gh auth refresh -h 'github.com' -s $scopes_to_request
+}
 
 Push-Location("$PsScriptRoot/AA-tf")
 
